@@ -1,0 +1,88 @@
+\documentclass{report}
+% PACKAGES %
+\usepackage[english]{} % Sets the language
+\usepackage[margin=2cm]{geometry} % Sets the margin size
+\usepackage{graphicx} % Enhanced package for including graphics/figures
+\usepackage{float} % Allows figures and tables to be floats
+\usepackage{amsmath} % Enhanced math package prepared by the American Mathematical Society
+\usepackage{amssymb} % AMS symbols package
+\usepackage{bm} % Allows you to use \bm{} to make any symbol bold
+\usepackage{verbatim} % Allows you to include code snippets
+\usepackage{setspace} % Allows you to change the spacing between lines at different points in the document
+\usepackage{parskip} % Allows you alter the spacing between paragraphs
+\usepackage{multicol} % Allows text division into multiple columns
+\usepackage{units} % Allows fractions to be expressed diagonally instead of vertically
+\usepackage{booktabs,multirow,multirow} % Gives extra table functionality
+
+\usepackage{rotating} % Allows tables to be rotated
+
+\newcommand{\tab}{\-\hspace{1.5cm}}
+
+% Set path to figure image files
+\graphicspath{ {"C:/Users/Mitch/Documents/Cal/2 - 2017 Spring/COMPSCI 289A - Intro to Machine Learning/HW01/Figures/"} }
+
+\begin{document}
+{\bf {\large {COMPSCI 289A} Homework {2} \hfill {Mitchell Negus\\2/13/2017}}}\\\\
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PROBLEM 1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Problem 1}
+
+\subsection*{\textit{a.})}
+
+Say $P(T)$ is the probability of hitting the target, and $P(W)$ is the probability of it being windy. We are given that $P(T|W) = 0.4$ and $P(T|W^{C}) = 0.7$, as well as that $P(W) = 0.3$. We note that conditional probability theory states that in general, $P(A|B) = \frac{P(A \cap B)}{P(B)}$.
+
+(i) on a given shot there is a gust of wind and she hits her target; $P(T \cap W)$\\
+	$$ P(T|W) = \frac{P(T \cap W)}{P(W)} $$
+	$$ P(T \cap W) = P(T|W) \cdot P(W) $$
+	$$ P(T \cap W) = (0.4)(0.3) $$
+	$$\boxed{ P(T \cap W) = 0.12 } $$
+	
+(ii) she hits the target with her first shot; $P(T)$\\
+	$$ P(T) = P(T \cap W) + P(T \cap W^{C}) $$
+	$$ P(T) = P(T|W) \cdot P(W) + P(T|W^{C}) \cdot P(W^{C}), \;\; P(W^{C}) = 1-P(W) = 0.7$$
+	$$ P(T) = (0.4)(0.3) + (0.7)(0.7) $$
+	$$\boxed{ P(T) = 0.61 }$$
+
+(iii) she hits the target exactly once in two shots; $P(T) \cdot P(T^{C}) + P(T^{C}) \cdot P(T)$
+	$$ P(T) \cdot P(T^{C}) + P(T^{C}) \cdot P(T) = 2 \cdot P(T) \cdot P(T^{C}), \;\; P(T^{C}) = 1-P(T) = 0.39 $$
+	$$ P(T) \cdot P(T^{C}) + P(T^{C}) \cdot P(T) = 2(0.61)(0.39) $$
+	$$\boxed{ P(T) \cdot P(T^{C}) + P(T^{C}) \cdot P(T) = 0.4758 }$$
+	
+(iv) there was no gust of wind on an occasion when she missed; $\frac{P(T^{C}\cap W^{C})}{P(T^{C})}$ 
+	$$ \frac{P(T^{C} \cap W^{C}}{P(T^{C}} = \frac{P(T^{C}|W^{C})P(W^{C})}{P(T^{C})}, \;\; P(T^{C}|W^{C}) = 1-P(T|W^{C}) = 0.3$$
+	$$ \frac{P(T^{C} \cap W^{C})}{P(T^{C})} = \frac{(0.3)(0.7)}{(0.39)}$$
+	$$\boxed{ \frac{P(T^{C} \cap W^{C})}{P(T^{C})} = 0.538 }$$
+	
+\subsection*{\textit{b.})}
+We are given $$P(A|B,C) = P(A|B \cap C) > P(A|B)$$
+and from the properties of conditional probability we find \begin{equation} P(A|B \cap C) =\frac{P(A \cap B \cap C)}{P(B \cap C)} > \frac{P(A \cap B)}{P(B)}. \label{given}\end{equation}
+
+We are looking to show $$P(A|B,C^{C}) = P(A|B \cap C^{C}) < P(A|B).$$
+or equivalently \begin{equation}P(A|B \cap C^{C}) =\frac{P(A \cap B \cap C^{C})}{P(B \cap C^{C})} < \frac{P(A \cap B)}{P(B)}.\label{prove}\end{equation}
+
+Returning to equation \ref{given}, we find through algebraic manipulation that
+$$P(A \cap B \cap C) > \frac{P(A \cap B) P(B \cap C)}{P(B)}$$
+$$-P(A \cap B \cap C) < -\frac{P(A \cap B) P(B \cap C)}{P(B)}$$
+$$P(A \cap B) - P(A \cap B \cap C) < P(A \cap B) - \frac{P(A \cap B) P(B \cap C)}{P(B)}$$
+$$P(A \cap B) - P(A \cap B \cap C) < \frac{P(A \cap B)}{P(B)}\left(P(B) - P(B \cap C)\right)$$
+\begin{equation}\frac{P(A \cap B) - P(A \cap B \cap C)}{P(B) - P(B \cap C)} < \frac{P(A \cap B)}{P(B)}.\label{intermed}\end{equation}
+
+Since in general, $$P(X \cap Y) + P(X \cap Y^{C}) = P(X),$$
+$$\text{(also expressed as }P(X \cap Y^{C}) = P(X) - P(X \cap Y))$$
+we can express equation \ref{intermed} as $$\frac{P(A \cap B \cap C^{C})}{P(B \cap C^{C})} < \frac{P(A \cap B)}{P(B)},$$
+equivalent to equation \ref{prove}. $\blacksquare$
+
+
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PROBLEM 2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Problem 2}
+
+\subsection*{\textit{a.})}
+
+Assume we are considering a positive semidefinite matrix $A \in \mathbb{R}^{n \times n}$ so that $x^{\top}Ax \geq 0$. By definition, we say $A \succeq 0$ (i).
+
+
+\end{document}
+
