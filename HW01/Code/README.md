@@ -30,4 +30,4 @@ Outputs of the code depend on which cells are executed in the Jupyter notebook.
 2) For MNIST and spam data, the Jupyter notebook can generate a csv file containing predictions for a input data set based on the complete set of training data provided (including data that had previously been separated for validation).
 3) All three notebooks can generate plots of error (error = 1-accuracy) as a function of training sample size.
 
-*To cover a wide range of C-values in hyperparameter testing, a set of 20 logarithmically evenly-spaced C-values were chosen. This decision resulted in data where an accuracy for the default C=1 was not calculated. Without an accuracy for C=1, the error plots feature the error for each sample-count for the closest value of C to 1 in the set of 20 values.**
+*To cover a wide range of C-values in hyperparameter testing, a set of 20 logarithmically evenly-spaced C-values were chosen. This decision resulted in data where an accuracy for the default C=1 was not calculated. Without an accuracy for C=1, the error plots feature the error for each sample-count for the closest value of C to 1 in the set of 20 values.
