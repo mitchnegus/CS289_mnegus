@@ -2,7 +2,7 @@ README
 ==============================================================================================
 Mitch Negus
 3032146443
-==============================================================================================
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 CODE - HW01 - CompSci 289A
 
 The code for this assignment includes 3 Jupyter notebooks (CS289A_HW01_MNIST.ipynb, CS289A_HW01_spam.ipynb, CS289_HW01_CIFAR-10.ipynb) that include code for each dataset, as well as 2 supplemental python modules (HW01_utils.py, trainfunctions.py). The description of each file is as follows:

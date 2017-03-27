@@ -2,7 +2,7 @@ README
 ==============================================================================================
 Mitch Negus
 3032146443
-==============================================================================================
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 CODE - HW04 - CompSci 289A
 
 The code for this assignment includes 2+ Jupyter notebooks (CS289A_HW04_Prob1.ipynb, CS289A_HW04_Prob4.ipynb) that include code for Problems 1 and 4. Additionally, there is a supplemental python module (HW04_utils.py). The description of each file is as follows:
