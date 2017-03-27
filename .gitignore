@@ -1,0 +1,13 @@
+# Mac files
+**/.DS_Store
+
+# Python files
+__init__.py
+**/__pycache__/
+/*/Data/
+
+# LaTeX files
+*.synctex.gz
+*.aux
+*.log
+*.out
