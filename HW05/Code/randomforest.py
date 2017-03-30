@@ -1,10 +1,10 @@
 """
-decisiontree.py
+randomforest.py
 ==============================================
-Train a decision tree and predict on test data
+Train a random forest and predict on test data
 ==============================================
 
-This python module contains the decision tree class, which can be trained on 
+This python module contains the random forest class, which can be trained on 
 labeled data (input as numpy arrays: for data, an Nxd matrix with N rows 
 corresponding to N sample points and d columns corresponding to d features; for 
 labels, an N vector with labels corresponding to each of the N sample points)
@@ -13,21 +13,26 @@ labels, an N vector with labels corresponding to each of the N sample points)
 import numpy as np
 
 
-class DecisionTree:
+class RandomDecisionTree:
     """
-    Build and store a decision tree, based on supplied training data. 
+    Build and store a random decision tree, based on supplied training data. 
     Use this tree to predict classifications.
     - treedepth: an integer for the max depth of the tree
+    - mfeatures: an integer number of random features tested for splits per node
     - verbose:   a boolean for descriptive output
     """
 
-    def __init__(self,treedepth=10,verbose=False,params=None):
+    def __init__(self,treedepth=10,mfeatures=None,verbose=False):
         self.depth = treedepth
+        self.mfeatures = mfeatures
+        self.nfeatures = None
         self.verbose = verbose
         self.tree = self.Node()
         if type(treedepth) is not int:
-            print('ERROR: Tree depth must be an integer.')
-
+            print('ERROR (RandomDecisionTree): Tree depth must be an integer.')
+        if mfeatures and type(mfeatures) is not int:
+            print('ERROR (RandomDecisionTree): The number of random features must be an integer.')
+        
         
     def entropy(self,C,D,c,d):
         """
@@ -63,6 +68,20 @@ class DecisionTree:
         return H
     
     
+    def pick_random_features(self):
+        """Randomly choose a set of m features out of n total features"""
+        
+        mrandomfeatures = -1*np.ones(self.mfeatures)
+        for i in range(self.mfeatures):
+            while mrandomfeatures[i] == -1:
+                feature_i = np.random.randint(self.nfeatures)
+                if feature_i not in mrandomfeatures:
+                    mrandomfeatures[i] = feature_i
+        mrandomfeatures = np.sort(mrandomfeatures).astype(int)
+        
+        return mrandomfeatures 
+    
+    
     def segment(self,data,labels):
         """
         March through data and determine split which maximizes info gain.
@@ -76,7 +95,7 @@ class DecisionTree:
             totals = np.append(totals,[0])
         # Quick safety check
         if len(labels) != len(data):
-            print('ERROR (DecisionTree.segment): There must be the same number of labels as datapoints.')
+            print('ERROR (RandomForest.segment): There must be the same number of labels as datapoints.')
         
         # Calculate the initial entropy, used to find info gain
         C,D = 0,0                      # C = in class left of split; D = not in class left of split
@@ -87,9 +106,11 @@ class DecisionTree:
         maxinfogain = 0
         splitrule = []   
         
-        for feature_i in range(len(data[0])):
+        mrandomfeatures = self.pick_random_features()
+        for feature_i in mrandomfeatures:
             # Order the data for determining ideal splits
             lbldat = np.concatenate(([data[:,feature_i]],[labels]),axis=0)
+            
             fv = np.sort(lbldat.T,axis=0)
             lastfeature = np.array(['',''])
             
@@ -106,7 +127,7 @@ class DecisionTree:
                     D += 1
                     d -= 1
                 else:
-                    print("ERROR (DecisionTree.segment): Classifications can only be 0 or 1.")
+                    print("ERROR (RandomForest.segment): Classifications can only be 0 or 1.")
                 
                 # Skip splitting values that are not separable
                 if fv[point_i,0] == fv[point_i+1,0]:
@@ -119,11 +140,11 @@ class DecisionTree:
                         splitrule = [feature_i,fv[point_i,0]]
         
         return splitrule
-            
+        
         
     def train(self,data,labels,node=1,deep=0):
         """
-        Train the decision tree on input data
+        Train the random decision tree on input data
         - data:   Nxd numppy array with N sample points and d features
         - labels: 1D, length-N numpy array with labels for the N sample points
         - node:   node class passed to function; default is 1, a flag for the head node (INTERNAL USE ONLY)
@@ -134,9 +155,15 @@ class DecisionTree:
         labels = labels.astype(int)
 
         # On the first training cycle, set the current node to the head node
+        # If the number of random features has not yet been set, set that too.
         if node==1:
             node=self.tree
-            
+            if self.mfeatures is None:
+                self.mfeatures = np.int(np.round((np.sqrt(len(data[0])))))  # m random features
+            self.nfeatures = len(data[0])                    # n total features
+            if self.mfeatures > self.nfeatures:
+                print('WARNING: The number of random features to choose is greater than the total number of features. Using all of the features instead')
+                self.mfeatures = self.nfeatures
         # Grow decision tree
         depthlim = self.depth
         if deep < depthlim:
@@ -161,13 +188,13 @@ class DecisionTree:
             if self.verbose is True:
                 print('You made a leaf node! It has value',node.leaflabel,'and',node.leafcount,'items.')            
         else:
-            print('ERROR (DecisionTree.train): The node type could not be identified!')
-          
+            print('ERROR (RandomForest.train): The node type could not be identified!')
+    
         
     def predict(self,testdata):
         """
         Predict classfications for unlabeled data points using the previously 
-        trained decision tree.
+        trained random decision tree.
         - testdata: Nxd numpy array with N sample points and d features
                     *Note, dimensions N and d must match those used 
                     for data array in DecisionTree.train*
@@ -215,6 +242,7 @@ class DecisionTree:
             
         def isleaf(self,data,labels,splitrule):
             """Determine if this is a leaf node"""
+            
             if splitrule:
                 indsabove = self.datainds_above_split(data,splitrule)
                 self.rule = splitrule
@@ -239,7 +267,7 @@ class DecisionTree:
             for point_i in range(len(fv)):
                 if fv[point_i] > splitrule[1]:
                     indsabove.append(point_i)
-                    
+            
             return indsabove
               
         
@@ -261,4 +289,59 @@ class DecisionTree:
             return rightdata,rightlabels
         
 
+class RandomForest:
+    """
+    Build and store a random forest, based on supplied training data. 
+    Use this tree to predict classifications.
+    - treedepth: an integer for the max depth of any tree in the forest
+    - mfeatures: an integer number of random features tested for splits per node
+    - verbose:   a boolean for descriptive output
+    """
 
+    def __init__(self,treedepth=10,ntrees=None,mfeatures=None,verbose=False):
+        self.treedepth = treedepth
+        self.mfeatures = mfeatures
+        self.verbose = verbose
+        self.treecount = ntrees
+        self.forest = []
+        if type(treedepth) is not int:
+            print('ERROR (RandomForest): Tree depth must be an integer.')
+        if mfeatures and type(mfeatures) is not int:
+            print('ERROR (RandomForest): The number of random features must be an integer.')
+            
+            
+    def train(self,data,labels):
+        """
+        Train (grow) the random forest on input data
+        - data:   Nxd numppy array with N sample points and d features
+        - labels: 1D, length-N numpy array with labels for the N sample points
+        """
+        if self.treecount is None:
+            self.treecount = int(np.sqrt(len(data)))
+        elif type(self.treecount) is not int:
+            print('ERROR (RandomForest): The number of trees must be an integer.')
+            
+        for tree_i in range(self.treecount):
+            tree = RandomDecisionTree(self.treedepth,self.mfeatures,self.verbose)
+            tree.train(data,labels)
+            self.forest.append(tree)
+            
+            
+    def predict(self,testdata):
+        """
+        Predict classfications for unlabeled data points using the previously 
+        trained random forest.
+        - testdata: Nxd numpy array with N sample points and d features
+                    *Note, dimensions N and d must match those used 
+                    for data array in DecisionTree.train*
+        Returns a 1D, length-N numpy array of predictions (one prediction per point)
+        """
+        
+        aggregatedpredictions = np.empty((self.treecount,len(testdata)))
+        for tree_i in range(self.treecount):
+            treepredictions = self.forest[tree_i].predict(testdata)
+            aggregatedpredictions[tree_i]=treepredictions
+        forestpredictions = np.round(np.average(aggregatedpredictions,axis=0)).astype(int)
+        
+        return forestpredictions
+    
