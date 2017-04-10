@@ -117,7 +117,7 @@ class DecisionTree:
                     if infogain > maxinfogain:
                         maxinfogain = infogain
                         splitrule = [feature_i,fv[point_i,0]]
-        
+                    
         return splitrule
             
         
@@ -177,6 +177,12 @@ class DecisionTree:
         npoints = len(testdata)
         predictions = np.empty(npoints)
         for point_i in range(npoints):
+            
+            # Print out decisions for a point
+            if point_i<10:
+                if self.verbose == 'path10':
+                    print('Display of choices for point %i' %point_i)
+            
             ParentNode = self.tree
             Rule = ParentNode.rule
             while Rule is not None:
@@ -184,12 +190,21 @@ class DecisionTree:
                 splitval = Rule[1]
                 if testdata[point_i,splitfeat_i] <= splitval:
                     ChildNode = ParentNode.left
+                    if point_i<10:
+                        if self.verbose == 'path10':
+                            print('Feature #'+str(splitfeat_i+1)+': ',testdata[point_i,splitfeat_i],'<=',splitval)
+                        
                 else:
+                    if point_i<10:
+                        if self.verbose == 'path10':
+                            print('Feature #'+str(splitfeat_i+1)+': ',testdata[point_i,splitfeat_i],'>',splitval)
                     ChildNode = ParentNode.right
                 ParentNode = ChildNode
                 Rule = ParentNode.rule
             predictions[point_i]=ParentNode.leaflabel
-        
+            if point_i<10:
+                if self.verbose == 'path10':
+                    print('Point labeled as',ParentNode.leaflabel)
         return predictions.astype(int)
     
     

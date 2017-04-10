@@ -298,9 +298,10 @@ class RandomForest:
     - verbose:   a boolean for descriptive output
     """
 
-    def __init__(self,treedepth=10,ntrees=None,mfeatures=None,verbose=False):
+    def __init__(self,treedepth=10,ntrees=None,mfeatures=None,subsize=None,verbose=False):
         self.treedepth = treedepth
         self.mfeatures = mfeatures
+        self.subsize = subsize
         self.verbose = verbose
         self.treecount = ntrees
         self.forest = []
@@ -316,16 +317,23 @@ class RandomForest:
         - data:   Nxd numppy array with N sample points and d features
         - labels: 1D, length-N numpy array with labels for the N sample points
         """
+        if self.subsize is None:
+            self.subsize = len(data)
         if self.treecount is None:
             self.treecount = int(np.sqrt(len(data)))
         elif type(self.treecount) is not int:
             print('ERROR (RandomForest): The number of trees must be an integer.')
             
         for tree_i in range(self.treecount):
+            # choose a random subset of the data, size "subsize", for BAGGING
+            subsetindices = np.random.randint(0,self.subsize,self.subsize)
+            baggeddata = data[subsetindices]
+            baggedlabels = labels[subsetindices]
             tree = RandomDecisionTree(self.treedepth,self.mfeatures,self.verbose)
-            tree.train(data,labels)
+            tree.train(baggeddata,baggedlabels)
             self.forest.append(tree)
-            
+            if tree_i%5 == 0:
+                print('Finished training %i tree(s) out of %i' %(tree_i,self.treecount))
             
     def predict(self,testdata):
         """
