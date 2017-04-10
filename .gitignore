@@ -6,6 +6,9 @@ __init__.py
 **/__pycache__/
 /*/Data/
 
+# Jupyter notebook files
+**/.ipynb_checkpoints/
+
 # LaTeX files
 *.synctex.gz
 *.aux
