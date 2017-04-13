@@ -197,7 +197,7 @@ class RandomDecisionTree:
         trained random decision tree.
         - testdata: Nxd numpy array with N sample points and d features
                     *Note, dimensions N and d must match those used 
-                    for data array in DecisionTree.train*
+                    for data array in RandomDecisionTree.train*
         Returns a 1D, length-N numpy array of predictions (one prediction per point)
         """
         
@@ -341,7 +341,7 @@ class RandomForest:
         trained random forest.
         - testdata: Nxd numpy array with N sample points and d features
                     *Note, dimensions N and d must match those used 
-                    for data array in DecisionTree.train*
+                    for data array in RandomForest.train*
         Returns a 1D, length-N numpy array of predictions (one prediction per point)
         """
         
