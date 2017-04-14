@@ -35,7 +35,7 @@ def val_partition(data,valfrac):
     return trainset,valset
    
     
-def val_accuracy(predictions,truelabels):
+def score_accuracy(predictions,truelabels):
     count,total = 0,0
     for i in range(len(predictions)):
         if predictions[i] == truelabels[i]:
