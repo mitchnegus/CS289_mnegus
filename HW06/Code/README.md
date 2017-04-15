@@ -5,7 +5,7 @@ Mitch Negus
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------
 CODE - HW06 - CompSci 289A
 
-The code for this assignment includes ... Descriptions of the files are below:
+The code for this assignment includes the following files:
 
 * HW06_utils.py					-utility module with functions to load & format data files
 * neuralnet.py						-implementation of decision tree (class)
