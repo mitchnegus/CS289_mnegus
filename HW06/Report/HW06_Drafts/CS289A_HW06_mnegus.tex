@@ -22,7 +22,7 @@
 \usepackage{rotating} % Allows tables to be rotated
 \usepackage{graphicx} % Enhanced package for including graphics/figures
 	% Set path to figure image files
-	\graphicspath{ {"/Users/mitch/Documents/Cal/2_2017_Spring/COMPSCI 289A - Intro to Machine Learning/HW05/Figures/"} }
+	\graphicspath{ {"/Users/mitch/Documents/Cal/2_2017_Spring/COMPSCI 289A - Intro to Machine Learning/HW06/Figures/"} }
 \usepackage{listings} % for including text files
 	\lstset{basicstyle=\ttfamily\scriptsize,
         		  keywordstyle=\color{blue}\ttfamily,
@@ -61,8 +61,8 @@
 \begin{document}
 \thispagestyle{empty}
 
-{\bf {\large {COMPSCI 289A} Homework {5} \hfill Mitch Negus\\
-		3/26/2017 						\hfill	3032146443}}\\\\
+{\bf {\large {COMPSCI 289A} Homework {6} \hfill Mitch Negus\\
+		4/14/2017 						\hfill	3032146443}}\\\\
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PROBLEM 1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -184,17 +184,97 @@ Since we are updating our matrices $V$ and $W$ using stochastic gradient descent
 
 \tab $V,W \leftarrow$ weight matrices initialized randomly from normal distribution with mean $\mu=0$ and $
 \sigma^2 = (...)$\\
-\tab Forward calculation [ $h = \tanh(Vx)$\sep$\rightarrow$\sep$z = s(Wh)$\sep$\rightarrow$\sep$L(z)$ ]\\
 \tab while (continue = True or $L(z) > 0$) \\
+\tab \tab \tab Forward calculation [ $h = \tanh(Vx)$\sep$\rightarrow$\sep$z = s(Wh)$\sep$\rightarrow$\sep$L(z)$ ]\\
 \tab \tab \tab Backward calculation to return $\nabla_V L$ and $\nabla_W L$\\
 \tab \tab \tab $V \leftarrow V - \epsilon \nabla_V L)$ \\
 \tab \tab \tab $W \leftarrow W - \epsilon \nabla_W L$ \\
-\tab \tab \tab Forward calculation [ $h = \tanh(Vx)$\sep$\rightarrow$\sep$z = s(Wh)$\sep$\rightarrow$\sep$L(z)$ ]\\
 \tab return $V,W$ \\
 
 where, using our derived equations from above, the update rules are more specifically\\
 \tab \tab \tab \tab $V \leftarrow V - \epsilon(W^T \mathcal{Q}) \circ \mathcal{S} x^T $\\
 \tab \tab \tab \tab $ W \leftarrow W - \epsilon(\mathcal{Q} \otimes h). $
+
+
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PROBLEM 2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Problem 2}
+
+\subsection*{Implemenation \& Results:}
+1) \textbf{Hyperparameters}\\
+\tab \tab Manually tested values of learning rate $\epsilon$ between 1 and and $1\times10^{-5}$. Settled on 0.1 as an optimal value.
+
+2) \textbf{Training Accuracy}\\
+\tab \tab 88.94\% training accuracy was achieved after 20 epochs of stochastic gradient descent training.
+
+3) \textbf{Validation Accuracy}\\
+\tab \tab 86.63\% validation accuracy was achieved on the 20\% of data that was initially withheld.
+
+4) \textbf{Loss vs. Iterations}\\
+\tab \tab (...)
+
+5) \textbf{Kaggle}\\
+\tab \tab Display Name: mitch
+\tab \tab Score: 0.87106
+
+6) \textbf{Code}\\
+\tab \tab See appendix for full implementation in NeuralNet class
+
+
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PROBLEM 3 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Problem 3}
+
+\subsection*{Visualization}
+
+Correctly classified images:\\
+\includegraphics[width=3cm]{correctclass01.png}
+\includegraphics[width=3cm]{correctclass02.png}
+\includegraphics[width=3cm]{correctclass03.png}
+\includegraphics[width=3cm]{correctclass04.png}
+\includegraphics[width=3cm]{correctclass05.png}
+
+Incorrectly classified images:\\
+\includegraphics[width=3cm]{incorrectclass01.png}
+\includegraphics[width=3cm]{incorrectclass02.png}
+\includegraphics[width=3cm]{incorrectclass03.png}
+\includegraphics[width=3cm]{incorrectclass04.png}
+\includegraphics[width=3cm]{incorrectclass05.png}
+
+
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PROBLEM 4 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Problem 4}
+
+No extra bells and whistles were tested, though the neural network was designed to be flexible.
+The code currently operates using stochastic gradient descent, though it is designed to be able to take in multiple points (or the complete dataset) for easy conversion to batch/mini-batch gradient descent.
+
+Furthermore, the modular structure allows the neural network to be adapted for any number of layers and any number of hidden units per layer. 
+To do this, the code takes in the following sequences as arguments: layers, number of hidden units per layer, and activation functions per layer. 
+Two modules are necessary to run this code, one containing activation functions to be included in the input sequence, and one containing a "gradient calculator" class which computes appropriate gradients for the desired neural network configuration.
+
+
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% APPENDIX %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Appendix}
+
+\lstinputlisting[language=Python,basicstyle=\ttfamily\scriptsize]{"/Users/mitch/Documents/Cal/2_2017_Spring/COMPSCI 289A - Intro to Machine Learning/HW06/Code/neuralnet.py"}
+
+\newpage
+\lstinputlisting[language=Python,basicstyle=\ttfamily\scriptsize]{"/Users/mitch/Documents/Cal/2_2017_Spring/COMPSCI 289A - Intro to Machine Learning/HW06/Code/gradients.py"}
+
+\-\\
+\-\\
+\-\\
+\-\\
+\lstinputlisting[language=Python,basicstyle=\ttfamily\scriptsize]{"/Users/mitch/Documents/Cal/2_2017_Spring/COMPSCI 289A - Intro to Machine Learning/HW06/Code/activationfns.py"}
+
+
+
 
 \end{document}
 

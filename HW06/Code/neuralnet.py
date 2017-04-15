@@ -1,356 +1,211 @@
 """
-"""
-randomforest.py
-==============================================
-Train a random forest and predict on test data
-==============================================
+neuralnet.py
+===============================================
+Train a neural network and predict on test data
+===============================================
 
-This python module contains the random forest class, which can be trained on 
+This python module contains the neural network class, which can be trained on 
 labeled data (input as numpy arrays: for data, an Nxd matrix with N rows 
 corresponding to N sample points and d columns corresponding to d features; for 
 labels, an N vector with labels corresponding to each of the N sample points)
+
+**NOTE: Use of this class requires the activationfns.py and gradients.py modules
 """
 
 import numpy as np
 
 
-class RandomDecisionTree:
+class NeuralNet:
     """
-    Build and store a random decision tree, based on supplied training data. 
-    Use this tree to predict classifications.
-    - treedepth: an integer for the max depth of the tree
-    - mfeatures: an integer number of random features tested for splits per node
-    - verbose:   a boolean for descriptive output
+    Train and store a neural network, based on supplied training data. 
+    Use this network to predict classifications.
     """
 
-    def __init__(self,treedepth=10,mfeatures=None,verbose=False):
-        self.depth = treedepth
-        self.mfeatures = mfeatures
-        self.nfeatures = None
-        self.verbose = verbose
-        self.tree = self.Node()
-        if type(treedepth) is not int:
-            print('ERROR (RandomDecisionTree): Tree depth must be an integer.')
-        if mfeatures and type(mfeatures) is not int:
-            print('ERROR (RandomDecisionTree): The number of random features must be an integer.')
-        
-        
-    def entropy(self,C,D,c,d):
+    def __init__(self,nlayers=3,unitsperlayer=None,actfns=[af.sigmoid,af.sigmoid],Gradients=None,verbose=False):
         """
-        Calculate entropy based on classifications above and below the 
-        splitrule.
-        - C: sample points in-class below splitrule (left)
-        - D: sample points not-in-class below splitrule (left)
-        - c: sample points in-class above splitrule (right)
-        - d: sample points not-in-class above splitrule (right)
-        Returns the entropy.
+        Initialize the neural network
+        - nlayers:       the number of layers in the neural network (includes input and output layers)
+        - unitsperlayer: a list specifying (in order) the number of units in all sequential layers except input
+        - actfns:        a list specifying (in order) the activation function used by all sequential layers except input
+        - Gradient:      a class providing optimized gradient calculations for the given sequence of  
+                         activation functions
+        - verbose:       a boolean for descriptive output
         """
+        if unitsperlayer == None:
+            unitsperlayer = 3*np.ones(nlayers)
+        elif nlayers == len(unitsperlayer)+1:    
+            self.nlayers = nlayers-1
+            self.unitsperlayer = unitsperlayer 
+        elif nlayers > len(unitsperlayer)+1:
+            print('ERROR: The number of units per layer were not given for at least one layer.')
+        elif nlayers < len(unitsperlayer)+1:
+            print('ERROR: More layers were given units than were specified by input "nlayers".')
+        if nlayers == len(actfns)+1:
+            self.actfns = actfns
+        elif nlayers > len(actfns)+1:
+            print('ERROR: The activation function was not given for at least one layer.')
+        elif nlayers < len(actfns)+1:
+            print('ERROR: More activation functions were provided than specified by input "nlayers".')
+        if Gradients == None:
+            print('ERROR: A gradient generator class must be included.')
+        self.gradients = Gradients
+        self.weight_matrices = []
         
-        if C != 0:
-            Cfactor = -(C/(C+D))*np.log2(C/(C+D))
-        else:
-            Cfactor = 0
-        if D != 0:
-            Dfactor = -(D/(C+D))*np.log2(D/(C+D))
-        else:
-            Dfactor = 0
-        if c != 0:
-            cfactor = -(c/(c+d))*np.log2(c/(c+d))
-        else:
-            cfactor = 0
-        if d != 0:
-            dfactor = -(d/(c+d))*np.log2(d/(c+d))
-        else:
-            dfactor = 0
-        H_left = Cfactor + Dfactor
-        H_right = cfactor + dfactor
-        H = ((C+D)*H_left + (c+d)*H_right)/(C+D+c+d)
+    
+    def initialize_weights(self,shape,mu=0,var=1):
+        """
+        Initialize weight matrix from normal distribution.
+        - shape: tuple specifying desired shape of weight matrix
+        - mu:    mean value of normal distribution
+        - var:   variance of normal distribution
+        """
+        weight_matrix = np.random.normal(loc=mu,scale=np.sqrt(var),size=shape)
         
-        return H
+        return weight_matrix
     
     
-    def pick_random_features(self):
-        """Randomly choose a set of m features out of n total features"""
-        
-        mrandomfeatures = -1*np.ones(self.mfeatures)
-        for i in range(self.mfeatures):
-            while mrandomfeatures[i] == -1:
-                feature_i = np.random.randint(self.nfeatures)
-                if feature_i not in mrandomfeatures:
-                    mrandomfeatures[i] = feature_i
-        mrandomfeatures = np.sort(mrandomfeatures).astype(int)
-        
-        return mrandomfeatures 
+    def weight_matrix_shape(self,layer_n,nfeatures):
+        """
+        Create weight matrix with the proper number of rows and columns for this layer
+        - n:         the layer which will employ an activation function on the 
+                     product of the weight matrix and values
+        - nfeatures: an integer specifying the number of features in the dataset
+        """
+        if layer_n != 0 and layer_n != range(self.nlayers)[-1]:
+            WM_nrows = self.unitsperlayer[layer_n]-1
+            WM_ncols = self.unitsperlayer[layer_n-1]
+        elif layer_n == 0:
+            WM_nrows = self.unitsperlayer[layer_n]-1
+            WM_ncols = nfeatures
+        else:
+            WM_nrows = self.unitsperlayer[layer_n]
+            WM_ncols = self.unitsperlayer[layer_n-1]
+        return WM_nrows,WM_ncols
     
     
-    def segment(self,data,labels):
+    def forward(self,data):
         """
-        March through data and determine split which maximizes info gain.
-        Returns the ideal splitrule as a length-2 list where the first element
-        is the index of the splitting feature and the second element is the 
-        value of that feature to split on.
+        Perform forward pass through neural network by multiplying data by weights
+        and enforcing a nonlinear activation function for each layer.
+        - data:           Nxd numpy array with N sample points and d features
+        - weightmatrices: ordered list of sequential weight matrices corresponding to layers
+        - actfns:         ordered list of sequential activation functions corresponding to layers
+                         (functions are defined in activationfuncs.py)
+        Returns layeroutputs, a list of the outputs from each layer. The last entry
+        is an CxN numpy array with hypotheses for each sample N_i being in class C_j.
         """
-        
-        totals = np.bincount(labels)
-        if len(totals)==1:
-            totals = np.append(totals,[0])
-        # Quick safety check
-        if len(labels) != len(data):
-            print('ERROR (RandomForest.segment): There must be the same number of labels as datapoints.')
-        
-        # Calculate the initial entropy, used to find info gain
-        C,D = 0,0                      # C = in class left of split; D = not in class left of split
-        c,d = totals[1],totals[0]      # c = in class right of split; d = not in class right of split
-        H_i = self.entropy(C,D,c,d) # the initial entropy, before any splitting
-        
-        # Initialize objects to store optimal split rules for iterative comparison
-        maxinfogain = 0
-        splitrule = []   
-        
-        mrandomfeatures = self.pick_random_features()
-        for feature_i in mrandomfeatures:
-            # Order the data for determining ideal splits
-            lbldat = np.concatenate(([data[:,feature_i]],[labels]),axis=0)
-            
-            fv = np.sort(lbldat.T,axis=0)
-            lastfeature = np.array(['',''])
-            
-            C,D = 0,0                      # Reset the counters
-            c,d = totals[1],totals[0]
-            
-            for point_i in range(len(fv)-1):
-                
-                # Update C,D,c,d to minmize runtime of entrop calc (keep at O(1) time)
-                if fv[point_i,1] == 1:
-                    C += 1
-                    c -= 1
-                elif fv[point_i,1] == 0:
-                    D += 1
-                    d -= 1
-                else:
-                    print("ERROR (RandomForest.segment): Classifications can only be 0 or 1.")
-                
-                # Skip splitting values that are not separable
-                if fv[point_i,0] == fv[point_i+1,0]:
-                    continue
-                else:
-                    H_f = self.entropy(C,D,c,d)
-                    infogain = H_i-H_f
-                    if infogain > maxinfogain:
-                        maxinfogain = infogain
-                        splitrule = [feature_i,fv[point_i,0]]
-        
-        return splitrule
-        
-        
-    def train(self,data,labels,node=1,deep=0):
+        H = data.T
+        layeroutputs = []
+        for i in range(self.nlayers):
+            W = self.weight_matrices[i]
+            actfn = self.actfns[i]
+            H = actfn(np.dot(W,H))
+            # If the layer is not the output layer, add a fictitious unit for bias terms
+            if i != self.nlayers-1:
+                fictu = np.array([np.ones_like(H[0])])
+                H = np.concatenate((H,fictu),axis=0)
+            layeroutputs.append(H)
+        return layeroutputs
+    
+    
+    def backward(self,layeroutputs,labelrange,gradients=None):
         """
-        Train the random decision tree on input data
+        Perform backward pass through neural network by computing gradients of 
+        input weight matrices with respect to the loss function comparing hypotheses 
+        to true values. Classes for gradients are provided in gradients.py module 
+        (a unique gradient class is required for neural networks with different 
+        numbers of layers and/or different activation functions)
+        """
+        if gradients == None:
+            Gradients = self.gradients
+        gradients = Gradients.calculate(self.weight_matrices,layeroutputs,labelrange)
+        
+        return gradients
+    
+    
+    def classify_outputs(self,finaloutputs):
+        """
+        Convert final outputs into classifications
+        -finaloutputs: a CxN numpy array with hypotheses for each sample N_i being in
+                       class C_j.
+        Returns a 1D, length-N array with values corresponding to point classifications
+        """
+        if len(finaloutputs) == 1:
+            classifications = np.around(finaloutputs[0]).astype(int)
+        if len(finaloutputs) > 1:
+            # Add one for 1-indexing in classification labels
+            classifications = (np.argmax(finaloutputs,axis=0)+np.ones(len(finaloutputs[0]))).astype(int)
+        return classifications
+    
+    
+    def train(self,data,labels,epsilon=0.1):
+        """
+        Train the neural network on input data
         - data:   Nxd numppy array with N sample points and d features
         - labels: 1D, length-N numpy array with labels for the N sample points
-        - node:   node class passed to function; default is 1, a flag for the head node (INTERNAL USE ONLY)
-        - deep:   a counter to determine current depth in tree (INTERNAL USE ONLY)
         """
-        
-        # Ensure labels are integers
+        # Ensure labels are integers and that data and labels are the same length
         labels = labels.astype(int)
-
-        # On the first training cycle, set the current node to the head node
-        # If the number of random features has not yet been set, set that too.
-        if node==1:
-            node=self.tree
-            if self.mfeatures is None:
-                self.mfeatures = np.int(np.round((np.sqrt(len(data[0])))))  # m random features
-            self.nfeatures = len(data[0])                    # n total features
-            if self.mfeatures > self.nfeatures:
-                print('WARNING: The number of random features to choose is greater than the total number of features. Using all of the features instead')
-                self.mfeatures = self.nfeatures
-        # Grow decision tree
-        depthlim = self.depth
-        if deep < depthlim:
-            splitrule = self.segment(data,labels)
-        else:
-            splitrule = []
-        if self.verbose is True:
-            print(data,labels)
-        node.isleaf(data,labels,splitrule)
+        if len(data) != len(labels):
+            print('ERROR: Data and labels must be the same length.')
         
-        # Train deeper if the node splits
-        if node.nodetype == 'SplitNode':
-            if self.verbose is True:
-                print('rule:',node.rule)
-                print('Splitting node left and right')
-            deep += 1
-            node.left=self.Node()
-            node.right=self.Node()
-            self.train(node.leftdata,node.leftlabels,node.left,deep)
-            self.train(node.rightdata,node.rightlabels,node.right,deep)
-        elif node.nodetype == 'LeafNode':
-            if self.verbose is True:
-                print('You made a leaf node! It has value',node.leaflabel,'and',node.leafcount,'items.')            
-        else:
-            print('ERROR (RandomForest.train): The node type could not be identified!')
+        # Add fictitious unit for bias terms
+        fictu = np.array([np.ones(len(data))]).T
+        data = np.concatenate((data,fictu),axis=1)
     
+        # Initialize Weights
+        nfeatures = len(data[0])
+        for layer_n in range(self.nlayers):
+            WM_nrows,WM_ncols = self.weight_matrix_shape(layer_n,nfeatures)
+            # Variance of weight matrix determined by fan-in (eta), the number of units in the previous layer 
+            # (or the number of data features when initializing the first weight matrix)
+            eta = WM_ncols
+            weight_matrix = self.initialize_weights((WM_nrows,WM_ncols),mu=0,var=(1/eta))
+            self.weight_matrices.append(weight_matrix)
+                
+        # Begin loop
+        epochcounter = 0
+        while epochcounter < 20:
+            # Stochastic gradient descent: Loop over points randomly, one at a time
+            # (Execute gradient class overhead before beginning)
+            self.gradients.prepare(data,labels,self.unitsperlayer[-1])
+
+            for datapoint_i in range(len(data)): 
+                X_i = np.array([data[datapoint_i]])
+                layeroutput_i = self.forward(X_i)
+                
+                gradients = self.backward(layeroutput_i,[datapoint_i,datapoint_i+1])
+                
+                for n in range(self.nlayers):
+                    self.weight_matrices[n]=self.weight_matrices[n]-epsilon*gradients[n]  
+
+            
+            epochcounter+=1
+            DL = np.concatenate((data,labels),axis=1)
+            np.random.shuffle(DL)
+            data = DL[:,:-1]
+            labels = np.array([DL[:,-1]]).T
+            epsilon *=0.75
+        
         
     def predict(self,testdata):
         """
         Predict classfications for unlabeled data points using the previously 
-        trained random decision tree.
+        trained neural network.
         - testdata: Nxd numpy array with N sample points and d features
-                    *Note, dimensions N and d must match those used 
-                    for data array in DecisionTree.train*
+                    *Note, dimension d must match that used for the data array in NeuralNet.train*
         Returns a 1D, length-N numpy array of predictions (one prediction per point)
         """
+        
+        # Add fictitious unit to input to match dimensions
+        fictu = np.array([np.ones(len(testdata))]).T
+        testdata = np.concatenate((testdata,fictu),axis=1)
         
         npoints = len(testdata)
         predictions = np.empty(npoints)
-        for point_i in range(npoints):
-            ParentNode = self.tree
-            Rule = ParentNode.rule
-            while Rule is not None:
-                splitfeat_i = Rule[0]
-                splitval = Rule[1]
-                if testdata[point_i,splitfeat_i] <= splitval:
-                    ChildNode = ParentNode.left
-                else:
-                    ChildNode = ParentNode.right
-                ParentNode = ChildNode
-                Rule = ParentNode.rule
-            predictions[point_i]=ParentNode.leaflabel
+        layeroutputs = self.forward(testdata)
+        predictions = self.classify_outputs(layeroutputs[-1])
         
+    
         return predictions.astype(int)
     
-    
-    
-    class Node:
-        """
-        Store a decision tree node, coupled in series to construct tree;
-        includes a left branch, right branch, and splitrule
-        """
-    
-        def __init__(self):
-            self.rule = None
-            self.left = None
-            self.leftdata = None
-            self.leftlabels = None
-            self.right = None
-            self.rightdata = None
-            self.rightlabels = None
-            self.leaflabel = None
-            self.leafcount = None
-            self.nodetype = None
-            
-            
-        def isleaf(self,data,labels,splitrule):
-            """Determine if this is a leaf node"""
-            
-            if splitrule:
-                indsabove = self.datainds_above_split(data,splitrule)
-                self.rule = splitrule
-                self.leftdata,self.leftlabels = self.leftDL(data,labels,indsabove)
-                self.rightdata,self.rightlabels = self.rightDL(data,labels,indsabove)
-                self.nodetype = 'SplitNode'
-            
-            elif not splitrule:
-                self.leaflabel = np.bincount(labels).argmax()
-                self.leafcount = len(labels)
-                self.nodetype = 'LeafNode'
-
-         
-        def datainds_above_split(self,data,splitrule):
-            """
-            Collect indices of points with values of the splitting feature
-            greater than the split rule
-            """
-            
-            indsabove = []
-            fv = data[:,splitrule[0]]
-            for point_i in range(len(fv)):
-                if fv[point_i] > splitrule[1]:
-                    indsabove.append(point_i)
-            
-            return indsabove
-              
-        
-        def leftDL(self,data,labels,indsabove):
-            """Return arrays of only left data and labels"""
-            
-            leftdata = np.delete(data,indsabove,axis=0)
-            leftlabels = np.delete(labels,indsabove,axis=0)
-            
-            return leftdata,leftlabels   
-        
-        
-        def rightDL(self,data,labels,indsabove):
-            """Return arrays of only right data and labels"""
-            
-            rightdata = data[indsabove]
-            rightlabels = labels[indsabove]
-            
-            return rightdata,rightlabels
-        
-
-class RandomForest:
-    """
-    Build and store a random forest, based on supplied training data. 
-    Use this tree to predict classifications.
-    - treedepth: an integer for the max depth of any tree in the forest
-    - mfeatures: an integer number of random features tested for splits per node
-    - verbose:   a boolean for descriptive output
-    """
-
-    def __init__(self,treedepth=10,ntrees=None,mfeatures=None,subsize=None,verbose=False):
-        self.treedepth = treedepth
-        self.mfeatures = mfeatures
-        self.subsize = subsize
-        self.verbose = verbose
-        self.treecount = ntrees
-        self.forest = []
-        if type(treedepth) is not int:
-            print('ERROR (RandomForest): Tree depth must be an integer.')
-        if mfeatures and type(mfeatures) is not int:
-            print('ERROR (RandomForest): The number of random features must be an integer.')
-            
-            
-    def train(self,data,labels):
-        """
-        Train (grow) the random forest on input data
-        - data:   Nxd numppy array with N sample points and d features
-        - labels: 1D, length-N numpy array with labels for the N sample points
-        """
-        if self.subsize is None:
-            self.subsize = len(data)
-        if self.treecount is None:
-            self.treecount = int(np.sqrt(len(data)))
-        elif type(self.treecount) is not int:
-            print('ERROR (RandomForest): The number of trees must be an integer.')
-            
-        for tree_i in range(self.treecount):
-            # choose a random subset of the data, size "subsize", for BAGGING
-            subsetindices = np.random.randint(0,self.subsize,self.subsize)
-            baggeddata = data[subsetindices]
-            baggedlabels = labels[subsetindices]
-            tree = RandomDecisionTree(self.treedepth,self.mfeatures,self.verbose)
-            tree.train(baggeddata,baggedlabels)
-            self.forest.append(tree)
-            if tree_i%5 == 0:
-                print('Finished training %i tree(s) out of %i' %(tree_i,self.treecount))
-            
-    def predict(self,testdata):
-        """
-        Predict classfications for unlabeled data points using the previously 
-        trained random forest.
-        - testdata: Nxd numpy array with N sample points and d features
-                    *Note, dimensions N and d must match those used 
-                    for data array in DecisionTree.train*
-        Returns a 1D, length-N numpy array of predictions (one prediction per point)
-        """
-        
-        aggregatedpredictions = np.empty((self.treecount,len(testdata)))
-        for tree_i in range(self.treecount):
-            treepredictions = self.forest[tree_i].predict(testdata)
-            aggregatedpredictions[tree_i]=treepredictions
-        forestpredictions = np.round(np.average(aggregatedpredictions,axis=0)).astype(int)
-        
-        return forestpredictions
-""" 
