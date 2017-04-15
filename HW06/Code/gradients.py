@@ -32,14 +32,14 @@ class tanhsig2layer:
         self.y = None
         self.grad_WL = None
         self.grad_VL = None
-        self.verbose == verbose
+        self.verbose = verbose
     
     
     def prepare(self,data,labels,noutunits):
         self.X = data
         self.y = np.zeros((len(labels),noutunits))
         for l in range(len(labels)):
-            self.y[l,labels[l]-1] += 1
+            self.y[l,int(labels[l,0])-1] += 1
         
         
     def calculate(self,weight_matrices,layeroutputs,labelrange):
@@ -60,15 +60,15 @@ class tanhsig2layer:
 
         self.V = weight_matrices[0]
         self.W = weight_matrices[1]
-        self.h = np.array([layeroutputs[0]]).T
-        self.z = np.array([layeroutputs[1]]).T
+        self.h = layeroutputs[0]
+        self.z = layeroutputs[1]
         
         rangemin,rangemax = labelrange[0],labelrange[1]
         X = self.X[rangemin:rangemax]
         y = self.y[rangemin:rangemax]
         Q = self.z - y.T
         n = len(y)
-        
+
         self.grad_VL = np.zeros_like(self.V)
         self.grad_WL = np.zeros_like(self.W)
         for i in range(n):

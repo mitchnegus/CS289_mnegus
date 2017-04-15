@@ -44,10 +44,15 @@
 					      minimum height=1.5cm,
 					      text centered, 
 					      draw=white, 
-					 ]
+					     ]
+	\tikzstyle{placeholder} = [rectangle,
+					      minimum width=2cm,
+					      draw=white,
+					      ]
 	\tikzstyle{arrow} = [thick,->,>=stealth]
 		
 \newcommand{\tab}{\-\hspace{0.5cm}}
+\newcommand{\sep}{\-\hspace{0.3cm}}
 
 % Create a header w/ Name & Date
 \pagestyle{fancy}
@@ -67,20 +72,23 @@ The constructed neural net follows the diagram below. $x \in \mathbb{R}^{785}$. 
 
 \begin{tikzpicture}[node distance=3cm]
 
-\node (W) [forwardfn, align=center] {$W$\\ \footnotesize$[26 \times 201]$};
-\node (V) [forwardfn, align=center, below of =W, yshift=-4cm] {$V$ \\ \footnotesize$[200\times785]$};
-\node (tanh) [forwardfn, align=center, right of =V, xshift=0.8cm, yshift=2cm] {$h = \tanh(Vx)$ \\ \footnotesize$[201\times1]$};
-\node (sigmoid) [forwardfn, align=center, right of =W, below of =W, xshift=4.5cm] {$z = s(Wh)$ \\ \footnotesize$[26\times1]$};
-\node (loss) [forwardfn, align=center, right of =sigmoid, xshift = 3cm] {$ L(z) = \sum_{j=1}^{26}{y_j \ln z_j + (1-y_j) \ln(1-z_j)} $\\\footnotesize $[1\times1]$};
+\node (blank) [placeholder] {};
+\node (x) [forwardfn, align=center, right of =blank,xshift=7cm] {$x$ \\ \footnotesize$[785\times1]$};
+\node (V) [forwardfn, align=center, below of =blank,left of =x,xshift =-2cm] {$V$ \\ \footnotesize$[200\times785]$};
+\node (W) [forwardfn, align=center, below of =V] {$W$\\ \footnotesize$[26 \times 201]$};
+\node (tanh) [forwardfn, align=center, below of =x] {$h = \tanh(Vx)$ \\ \footnotesize$[201\times1]$};
+\node (sigmoid) [forwardfn, align=center, below of=tanh] {$z = s(Wh)$ \\ \footnotesize$[26\times1]$};
+\node (loss) [forwardfn, align=center, below of =sigmoid] {$ L(z) = -\sum_{j=1}^{26}{y_j \ln z_j + (1-y_j) \ln(1-z_j)} $\\\footnotesize $[1\times1]$};
 
-\node (gradzjL) [backwardfn, align=center, below of =loss, yshift=1.5cm] {$\nabla_{z_j} L = \frac{y_j}{z_j} - \frac{1-y_j}{1-z_j}$};
-\node (gradWjL) [backwardfn, align=center, above of =sigmoid,yshift=-1cm,xshift=-2cm] {$\nabla_{W_j} L = \left(\frac{\partial L}{\partial z_j}\right) \nabla_{W_j} z_j $};
-\node (gradhL) [backwardfn, align=center, below of =sigmoid,yshift=1.5cm] {$\nabla_{h} L = \sum_{j=1}^{26}{\left(\frac{\partial L}{\partial z_j}\right) \nabla_{h} z_j }$};
-\node (gradViL) [backwardfn, align=center, below of =tanh,yshift=1.4cm,xshift=-0.4cm] {$\nabla_{V_j} L =\left(\frac{\partial L}{\partial h_j}\right) \nabla_{V_j} h_j$};
+\node (gradViL) [backwardfn, left of =V] {$\nabla_{V_j} L =\left(\frac{\partial L}{\partial h_j}\right) \nabla_{V_j} h_j$};
+\node (gradWjL) [backwardfn, left of =W] {$\nabla_{W_j} L = \left(\frac{\partial L}{\partial z_j}\right) \nabla_{W_j} z_j $};
+\node (gradhL) [backwardfn, right of =tanh, yshift=-1.5cm] {$\nabla_{h} L = \sum_{j=1}^{26}{\left(\frac{\partial L}{\partial z_j}\right) \nabla_{h} z_j }$};
+\node (gradzjL) [backwardfn, right of =sigmoid, yshift=-1.4cm] {$\nabla_{z_j} L = \frac{1-y_j}{1-z_j} - \frac{y_j}{z_j} $};
 
-\draw [arrow] (W) -- (sigmoid);
+\draw [arrow] (x) -- (tanh);
 \draw [arrow] (V) -- (tanh);
 \draw [arrow] (tanh) -- (sigmoid);
+\draw [arrow] (W) -- (sigmoid);
 \draw [arrow] (sigmoid) -- (loss);
 
 \end{tikzpicture}
@@ -92,16 +100,21 @@ We can substitute the following expressions:\\
 \tab$\nabla_{V_j} h_j = \sech^2(V_jx)x^T $\tab\footnotesize$[1\times785]$\normalsize\\
 
 We can also use backpropagation to show:\\
-\tab$\nabla_{W_j} L = \left(\frac{y_j}{z_j} - \frac{1-y_j}{1-z_j}\right)\left(z_j(1-z_j) h^T\right)$\tab\footnotesize$[1\times201]$\normalsize\\
-\tab$\nabla_{h} L = \sum_{j=1}^{26}{\left(\frac{y_j}{z_j} - \frac{1-y_j}{1-z_j}\right)\left(z_j(1-z_j)W_j^T\right)}$\tab\footnotesize$[201\times1]$\normalsize\\
+\tab$\nabla_{W_j} L = \left(\frac{1-y_j}{1-z_j} - \frac{y_j}{z_j}\right)\left(z_j(1-z_j) h^T\right)$\tab\footnotesize$[1\times201]$\normalsize\\
+\tab$\nabla_{h} L = \sum_{j=1}^{26}{\left(\frac{1-y_j}{1-z_j} - \frac{y_j}{z_j}\right)\left(z_j(1-z_j)W_j^T\right)}$\tab\footnotesize$[201\times1]$\normalsize\\
 \tab$\nabla_{V_j} L = \left(\nabla_{h} L\right)_j \sech^2(V_jx)x^T $\tab\footnotesize$[1\times785]$\normalsize\\
 
 To enhance calculation efficiency, we can reduce some of these equations into matrices. First, let $\mathcal{Q}$ be the matrix
 $$\mathcal{Q} = \begin{bmatrix}
-z_1(1-z_1)\left(\frac{y_1}{z_1} - \frac{1-y_1}{1-z_1}\right)\\
-z_2(1-z_2)\left(\frac{y_2}{z_2} - \frac{1-y_2}{1-z_2}\right)\\
+z_1(1-z_1)\left(\frac{1-y_1}{1-z_1} - \frac{y_1}{z_1}\right)\\
+z_2(1-z_2)\left(\frac{1-y_2}{1-z_2} - \frac{y_2}{z_2}\right)\\
 \vdots \\
-z_{26}(1-z_{26})\left(\frac{y_{26}}{z_{26}} - \frac{1-y_{26}}{1-z_{26}}\right)\\
+z_{26}(1-z_{26})\left(\frac{1-y_{26}}{1-z_{26}} - \frac{y_{26}}{z_{26}}\right)\\
+\end{bmatrix} = \begin{bmatrix}
+z_1 - y_1\\
+z_2 - y_2 \\
+\vdots \\
+z_{26} - y_{26} \\
 \end{bmatrix}$$
 
 With this, we can reexpress the above equations.\\
@@ -113,7 +126,7 @@ $$ \nabla_{W} L = \begin{bmatrix}
 \mathcal{Q}_2 h^T \\
 \vdots \\
 \mathcal{Q}_{26} h^T \\
-\end{bmatrix} = Qh^T = Q \otimes h \text{\tab\footnotesize$[26\times201]$\normalsize} $$
+\end{bmatrix} = \mathcal{Q}h^T = \mathcal{Q} \otimes h \text{\tab\footnotesize$[26\times201]$\normalsize} $$
 
 (2)\\
 \tab$\nabla_{h} L = \sum_{j=1}^{26}{\mathcal{Q}_j W_j^T}$\tab\footnotesize$[201\times1]$\normalsize\\
@@ -139,7 +152,7 @@ $$ \mathcal{S} = \begin{bmatrix}
 \sech^2(V_1 x) \\
 \sech^2(V_2 x) \\
 \vdots \\
-\sech^2(V_{26} x)\\
+\sech^2(V_{200} x)\\
 \end{bmatrix} = \sech^2(Vx) $$
 Then, $\nabla_{V_j} L = (W^T \mathcal{Q})_j \sech^2(V_jx)x^T $\tab\footnotesize$[1\times785]$\normalsize\\
 \tab or
@@ -147,27 +160,41 @@ $$ \nabla_{V} L = \begin{bmatrix}
 (W^T \mathcal{Q})_1 \sech^2(V_1 x)x^T \\
 (W^T \mathcal{Q})_2 \sech^2(V_2 x)x^T \\
 \vdots \\
-(W^T \mathcal{Q})_{201} \sech^2(V_{201}x)x^T \\
+(W^T \mathcal{Q})_{200} \sech^2(V_{200}x)x^T \\
 \end{bmatrix} = \begin{bmatrix}
 (W^T \mathcal{Q})_1 \sech^2(V_1 x) \\
 (W^T \mathcal{Q})_2 \sech^2(V_2 x) \\
 \vdots \\
-(W^T \mathcal{Q})_{201} \sech^2(V_{201}x)
+(W^T \mathcal{Q})_{200} \sech^2(V_{200}x)
 \end{bmatrix} x^T $$
 $$\nabla_{V} L = \left(\begin{bmatrix}
 (W^T \mathcal{Q})_1 \\
 (W^T \mathcal{Q})_2 \\
 \vdots \\
-(W^T \mathcal{Q})_{201} \\
+(W^T \mathcal{Q})_{200} \\
 \end{bmatrix} \circ \begin{bmatrix}
 \sech^2(V_1 x) \\
 \sech^2(V_2 x) \\
 \vdots \\
-\sech^2(V_{201}x)
+\sech^2(V_{200}x)
 \end{bmatrix}\right) x^T = (W^T \mathcal{Q}) \circ \mathcal{S} x^T $$
 
+\newpage
+Since we are updating our matrices $V$ and $W$ using stochastic gradient descent, we repeat the following process:
 
+\tab $V,W \leftarrow$ weight matrices initialized randomly from normal distribution with mean $\mu=0$ and $
+\sigma^2 = (...)$\\
+\tab Forward calculation [ $h = \tanh(Vx)$\sep$\rightarrow$\sep$z = s(Wh)$\sep$\rightarrow$\sep$L(z)$ ]\\
+\tab while (continue = True or $L(z) > 0$) \\
+\tab \tab \tab Backward calculation to return $\nabla_V L$ and $\nabla_W L$\\
+\tab \tab \tab $V \leftarrow V - \epsilon \nabla_V L)$ \\
+\tab \tab \tab $W \leftarrow W - \epsilon \nabla_W L$ \\
+\tab \tab \tab Forward calculation [ $h = \tanh(Vx)$\sep$\rightarrow$\sep$z = s(Wh)$\sep$\rightarrow$\sep$L(z)$ ]\\
+\tab return $V,W$ \\
 
+where, using our derived equations from above, the update rules are more specifically\\
+\tab \tab \tab \tab $V \leftarrow V - \epsilon(W^T \mathcal{Q}) \circ \mathcal{S} x^T $\\
+\tab \tab \tab \tab $ W \leftarrow W - \epsilon(\mathcal{Q} \otimes h). $
 
 \end{document}
 

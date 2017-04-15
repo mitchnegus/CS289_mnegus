@@ -41,8 +41,8 @@ def score_accuracy(predictions,truelabels):
         if predictions[i] == truelabels[i]:
             count += 1
         total += 1
-    valAcc = count/total
+    Acc = count/total
     
-    return valAcc
+    return Acc
 
 
