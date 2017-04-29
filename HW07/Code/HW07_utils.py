@@ -11,7 +11,7 @@ from scipy import io as spio
 
 def load_data(datapath,BASE_DIR,dictkey):
 #Load data
-    data_dict = spio.loadmat(BASE_DIR+datapath)
+    data_dict = spio.loadmat(BASE_DIR+datapath,mat_dtype=True)
     data = data_dict[dictkey]
 
     return data
