@@ -1,0 +1,228 @@
+\documentclass{report}
+% PACKAGES %
+\usepackage[english]{} % Sets the language
+\usepackage[margin=2cm]{geometry} % Sets the margin size
+\usepackage{fancyhdr} % Allows creation of headers
+\usepackage{xcolor} % Allows the use of color in text
+\usepackage{float} % Allows figures and tables to be floats
+\usepackage{appendix}
+\usepackage{amsmath} % Enhanced math package prepared by the American Mathematical Society
+\usepackage{amssymb} % AMS symbols package
+\usepackage{mathrsfs}% More math symbols
+\usepackage{bm} % Allows you to use \bm{} to make any symbol bold
+\usepackage{bbold} % Allows more bold characters
+\usepackage{verbatim} % Allows you to include code snippets
+\usepackage{setspace} % Allows you to change the spacing between lines at different points in the document
+\usepackage{parskip} % Allows you alter the spacing between paragraphs
+\usepackage{multicol} % Allows text division into multiple columns
+\usepackage{units} % Allows fractions to be expressed diagonally instead of vertically
+\usepackage{booktabs,multirow,multirow} % Gives extra table functionality
+\usepackage{hyperref} % Allows hyperlinks in the document
+\usepackage{rotating} % Allows tables to be rotated
+\usepackage{graphicx} % Enhanced package for including graphics/figures
+	% Set path to figure image files
+	\graphicspath{ {"/Users/mitch/Documents/Cal/2_2017_Spring/COMPSCI 289A - Intro to Machine Learning/HW05/Figures/"} }
+\usepackage{listings} % for including text files
+	\lstset{basicstyle=\ttfamily\scriptsize,
+        		  keywordstyle=\color{blue}\ttfamily,
+        	  	  stringstyle=\color{red}\ttfamily,
+          	  commentstyle=\color{gray}\ttfamily,
+          	  }
+
+\newcommand{\tab}{\-\hspace{0.5cm}}
+
+% Create a header w/ Name & Date
+\pagestyle{fancy}
+\rhead{\textbf{Mitch Negus} 3032146443}
+
+\begin{document}
+\thispagestyle{empty}
+
+{\bf {\large {COMPSCI 289A} Homework {5} \hfill Mitch Negus\\
+		3/26/2017 						\hfill	3032146443}}\\\\
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PROBLEM 1 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Problem 1}
+
+{\large Python module: \textbf{decisiontree.py}}\\
+\lstinputlisting[language=Python,basicstyle=\ttfamily\scriptsize]{"/Users/mitch/Documents/Cal/2_2017_Spring/COMPSCI 289A - Intro to Machine Learning/HW05/Code/decisiontree.py"}
+
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PROBLEM 2 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Problem 2}
+
+{\large Python module: \textbf{randomforest.py}}\\
+\lstinputlisting[language=Python,basicstyle=\ttfamily\scriptsize]{"../../Code/randomforest.py"}
+
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PROBLEM 3 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Problem 3}
+
+\subsection*{\textit{a.})}
+
+For the Titanic data set, both cabin and ticket number were removed because they were either sparse or not in a common format, so would be difficult (and essentially meaningless) to vectorize.
+
+For the census data set, we removed the final-weight (fnlwgt) category. According to the README, this parameter \textit{only} indicates similarity of demographics for a given state. Without knowing the location of the people in the census data, we cannot be sure that this parameter is valuable.
+
+Other missing values were imputed. Since the vast majority of missing data points in both census and Titanic datasets seemed to be categorical, they were replaced by the mode of their respective feature. Taking the mean of binary vectorized features would not make sense as it would always tend to give a value of zero unless there were either only two classes (so the mean, rounded to the nearest integer 0 or 1, would be the mode). Similarly, it is impossible to take the mean of discrete categories before vectorization.
+
+For the full preprocessing method, see the Jupyter notebook for preprocessing below.
+
+\subsection*{\textit{b.})}
+
+The stopping criteria (and formation of a leaf node) occurred when either (1) no entropy gain was found after trying every feature over every possible split, or (2) the branch of the tree reached a maximum user-specified depth.
+
+
+\subsection*{\textit{c.})}
+
+I did not include any special features to speed up training, other than the common sense approach to entropy evaluation over incremental spits, keeping the runtime at $O(1)$. The code does provide the user with the capacity to adjust all hyperparameters--tree depth for decision trees; tree depth, quantity of random sample points for bagging, random forest feature count, and number of random forest trees--and reducing any of these quantities will achieve a faster run time, though perhaps at a cost of accuracy.
+
+
+\subsection*{\textit{d.})}
+
+I implemented random forests by modifying my decision tree class. I created a random forest class which generated a list of "random tree" classes. "Random trees" were decision trees that allowed for a random subsample of features to be used in generating the tree. Furthermore, "random trees" were trained on a bagged (random set, with replacement) set of data by the random forest class.
+
+
+\subsection*{\textit{e.})}
+
+Nothing else was implemented.
+
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PROBLEM 4 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Problem 4}
+
+\textbf{PERFORMANCE EVALUATION}
+
+\begin{multicols}{3}
+\textbf{Spam}\\
+\-\\
+Decision Tree\\
+\tab Training Accuracy:   84.9709 \\
+\tab Validation Accuracy:   85.2743 \\
+\-\\
+Random Forest\\
+\tab Training Accuracy:   82.3833 \\
+\tab Validation Accuracy:   81.9409 \\
+\-\\
+\textbf{Kaggle: mnegus 0.79760}\\
+\columnbreak
+
+\textbf{Census}\\
+\-\\
+Decision Tree\\
+\tab Training Accuracy:   81.5496 \\
+\tab Validation Accuracy:   81.9377 \\
+\-\\
+Random Forest\\
+\tab Training Accuracy:   85.9942 \\
+\tab Validation Accuracy:   84.7188 \\
+\-\\
+\textbf{Kaggle: mnegus 0.76498}\\
+\columnbreak
+
+\textbf{Titanic}\\
+\-\\
+Decision Tree\\
+\tab Training Accuracy:   72.7778 \\
+\tab Validation Accuracy:   71.0000\\
+\-\\
+Random Forest\\
+\tab Training Accuracy:   88.0000 \\
+\tab Validation Accuracy:   87.0000\\
+\-\\
+\textbf{Kaggle: mnegus 0.83226}
+
+\end{multicols}
+
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PROBLEM 5 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Problem 5}
+
+\subsection*{\textit{a.})}
+
+No additional packages/features/feature transformations were used.
+
+
+\subsection*{\textit{b.})}
+
+Below is the path through the decision tree taken by one of the data points classified as ham: \\
+("[" = 11) $>$s 0\\
+("(" = 1) $>$ 0\\
+("[" = 11) $>$ 1\\
+("(" = 1) $\leq$ 1\\
+("[" = 11) $>$ 4\\
+("\#" = 1) $\leq$ 0\\
+("[" = 11) $>$ 6\\
+("[" = 11) $\leq$ 11\\
+("energy" = 0) $\leq$ 0\\
+("\$" = 10) $>$ 0\\
+("bank" = 0) $\leq$ 0\\
+("featured" = 0) $\leq$ 0\\
+Point correctly labeled as 0 (ham)\\
+
+Below is the path through the decision tree taken by one of the data points classified as spam: \\
+("[" = 3) $>$ 0\\
+("(" = 0) $\leq$ 0\\
+("message" = 2) $>$ 0\\
+("\&" = 0 ) $\leq$ 0\\
+("\#" = 1)  $>$ 0\\
+("[" = 3)  $>$ 2\\
+("[" = 3) $\leq$ 3\\
+("\#" = 1) $\leq$ 1\\
+("drug" = 5) $>$ 0\\
+Point correctly abeled as 1 (spam) \\
+
+
+
+\newpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PROBLEM 6 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Problem 6}
+
+\subsection*{\textit{a.})}
+
+No additional packages/features/feature transformations were used.
+
+
+\subsection*{\textit{b.})}
+
+Below is the path through the decision tree tken by one of the data points classified as making over \$50,000: \\
+Display of choices for point 0
+(Education Number = 9.0) $\leq$ 12\\
+(Hours/Wk = 40.0) $\leq$ 49\\
+(Age = 33) $\leq$ 55\\
+(Occupation = Exec/Manag = 0) $\leq$ 0\\
+(Race = Black = 0) $\leq$ 0\\
+(Age = 33) $\leq$ 47\\
+(Relationship = Unmarried = 1) $>$ 0\\
+(Capital Gains = 0) $\leq$ 3325\\
+Point correctly labeled as 0 ($<$\$50,000)\\
+
+Below is the path through the decision tree taken by one of the data points classified as making over \$50,000: \\
+(Education Number = 13 ) $>$ 12\\
+(Age = 58) $>$ 40\\
+(Age = 58) $>$ 46\\
+(Age = 58) $>$ 51\\
+(Age = 58)  58 $>$ 56\\
+(Age = 58)  58 $\leq$ 61\\
+(Relationship = Husband = 1) $>$ 0\\
+(Age = 58) $>$ 57\\
+Point correctly labeled as 1 ($>$\$50,000)
+
+
+
+\section*{Other Code}
+{\large Python module: \textbf{HW05\_utils.py}}\\
+\lstinputlisting[language=Python,basicstyle=\ttfamily\scriptsize]{"../../Code/HW05_utils.py"}
+
+\end{document}
+
+
+
+
+
+
