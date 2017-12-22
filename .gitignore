@@ -1,10 +1,14 @@
 # Mac files
-**/.DS_Store
+*.DS_Store
 
 # Python files
 __init__.py
-**/__pycache__/
-/*/Data/
+__pycache__/
+
+# Data
+data/
+Data/
+*.zip
 
 # Jupyter notebook files
 **/.ipynb_checkpoints/
